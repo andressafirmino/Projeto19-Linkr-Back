@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 import { getLogin, session } from "../repositories/login.repository.js";
+import { db } from "../database/database.connection.js";
 
 export async function login(req, res) {
   const { email, password } = req.body;
