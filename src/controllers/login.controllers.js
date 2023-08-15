@@ -11,7 +11,7 @@ export async function login(req, res) {
     console.log(result);
     if (result.rowCount != 1) {
       return res
-        .status(401)
+        .status(404)
         .send({ message: "Nenhum usuario com esse email foi achado" });
     }
 
