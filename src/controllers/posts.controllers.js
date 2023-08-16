@@ -1,11 +1,13 @@
 import { publicHasthtag, publicPost } from "../repositories/posts.repository.js";
 
 export async function postHashtag(req, res) {
-    const { link, description, userId } = req.body;
+    const { authorization } = req.headers;
+    const token = authorization?.replace("Bearer ", "");
+    const { link, description } = req.body;
 
     try {
+        
         const idPost = await publicPost(link, description, userId);
-
         const words = description.split(/\s+/);
         //const wordWithHashtag = [];
         console.log(words);
