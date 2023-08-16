@@ -6,7 +6,7 @@ export async function postHashtag(req, res) {
     const { link, description } = req.body;
 
     try {
-        
+
         const idPost = await publicPost(link, description, userId);
         const words = description.split(/\s+/);
         //const wordWithHashtag = [];
