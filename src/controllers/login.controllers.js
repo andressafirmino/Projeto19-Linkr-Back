@@ -22,7 +22,12 @@ export async function login(req, res) {
 
     session(token, result.rows[0].id);
 
-    res.status(200).send({ token });
+    res.status(200).send({
+      userId: result.rows[0].id,
+      username: result.rows[0].username,
+      image: result.rows[0].image,
+      token: token,
+    });
   } catch (err) {
     res.status(500).send(err.message);
   }
