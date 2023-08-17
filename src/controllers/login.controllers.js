@@ -8,7 +8,6 @@ export async function login(req, res) {
 
   try {
     const result = await getLogin(email);
-    console.log(result);
     if (result.rowCount != 1) {
       return res
         .status(404)

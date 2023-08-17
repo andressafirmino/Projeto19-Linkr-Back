@@ -27,9 +27,7 @@ SET default_table_access_method = heap;
 CREATE TABLE public.hashtags (
     id integer NOT NULL,
     name character varying NOT NULL,
-    "createdAt" timestamp without time zone NOT NULL,
-    "postId" integer NOT NULL,
-    count integer NOT NULL
+    "createdAt" timestamp without time zone DEFAULT now() NOT NULL
 );
 
 
@@ -60,6 +58,7 @@ ALTER SEQUENCE public.hashtags_id_seq OWNED BY public.hashtags.id;
 CREATE TABLE public.likes (
     id integer NOT NULL,
     "userId" integer NOT NULL,
+    "postId" integer NOT NULL,
     "createdAt" timestamp without time zone DEFAULT now() NOT NULL
 );
 
@@ -85,6 +84,38 @@ ALTER SEQUENCE public.likes_id_seq OWNED BY public.likes.id;
 
 
 --
+-- Name: post_hashtags; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.post_hashtags (
+    id integer NOT NULL,
+    "postId" integer NOT NULL,
+    "tagId" integer NOT NULL,
+    "createdAt" timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: post_hashtags_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.post_hashtags_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: post_hashtags_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.post_hashtags_id_seq OWNED BY public.post_hashtags.id;
+
+
+--
 -- Name: posts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -92,7 +123,6 @@ CREATE TABLE public.posts (
     id integer NOT NULL,
     link character varying NOT NULL,
     description character varying NOT NULL,
-    likes integer NOT NULL,
     "userId" integer NOT NULL,
     "createdAt" timestamp without time zone DEFAULT now() NOT NULL
 );
@@ -124,8 +154,8 @@ ALTER SEQUENCE public.posts_id_seq OWNED BY public.posts.id;
 
 CREATE TABLE public.sessions (
     id integer NOT NULL,
-    "userId" integer NOT NULL,
     token character varying NOT NULL,
+    "userId" integer NOT NULL,
     "createdAt" timestamp without time zone DEFAULT now() NOT NULL
 );
 
@@ -199,6 +229,13 @@ ALTER TABLE ONLY public.likes ALTER COLUMN id SET DEFAULT nextval('public.likes_
 
 
 --
+-- Name: post_hashtags id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.post_hashtags ALTER COLUMN id SET DEFAULT nextval('public.post_hashtags_id_seq'::regclass);
+
+
+--
 -- Name: posts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -232,6 +269,12 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
+-- Data for Name: post_hashtags; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
 -- Data for Name: posts; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -241,12 +284,21 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 -- Data for Name: sessions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
+INSERT INTO public.sessions VALUES (1, '59f6159e-b307-4215-8f65-315dd8d5c266', 1, '2023-08-16 20:40:38.282723');
+INSERT INTO public.sessions VALUES (2, '40972122-681b-48ef-9961-d3fe10c176db', 1, '2023-08-16 20:43:11.245244');
+INSERT INTO public.sessions VALUES (3, '32912e85-1e44-4639-b3e6-ec6c3ae29d25', 1, '2023-08-16 20:43:31.115361');
+INSERT INTO public.sessions VALUES (4, '0949af58-3dc6-4e6b-92bd-3507f5c85052', 1, '2023-08-16 20:44:41.949703');
+INSERT INTO public.sessions VALUES (5, '152c0108-dc11-447d-9314-3c05489ccbb8', 1, '2023-08-16 20:59:53.552077');
+INSERT INTO public.sessions VALUES (6, 'cca51b11-c9e8-4e83-be91-e247dca1e62d', 1, '2023-08-16 21:00:07.337303');
+INSERT INTO public.sessions VALUES (7, '2a315e4b-1dd2-4deb-89b6-7372a4bb9a25', 1, '2023-08-16 21:00:12.801427');
+INSERT INTO public.sessions VALUES (8, '451b2e9d-0eaf-4f28-bc93-92728766f1ec', 1, '2023-08-16 21:03:00.95123');
 
 
 --
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
 --
 
+INSERT INTO public.users VALUES (1, 'CaioNeme', 'https://s2-g1.glbimg.com/edM1HJtDGbHdDXZvhIJfUGiyWrA=/0x0:1080x1350/924x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2020/9/G/qfvEJ5Qdiq18A4BKQGJQ/matue4.jpg', 'caiocesarneme@gmail.com', '$2b$10$.Ft5IaEDYWxfzSSoPJ/hPO0MoW7AD8QFQmnXBdkPydMU831pxwILS', '2023-08-16 20:02:09.199186');
 
 
 --
@@ -264,6 +316,13 @@ SELECT pg_catalog.setval('public.likes_id_seq', 1, false);
 
 
 --
+-- Name: post_hashtags_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.post_hashtags_id_seq', 1, false);
+
+
+--
 -- Name: posts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
@@ -274,14 +333,14 @@ SELECT pg_catalog.setval('public.posts_id_seq', 1, false);
 -- Name: sessions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.sessions_id_seq', 1, false);
+SELECT pg_catalog.setval('public.sessions_id_seq', 8, true);
 
 
 --
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 1, false);
+SELECT pg_catalog.setval('public.users_id_seq', 1, true);
 
 
 --
@@ -333,6 +392,14 @@ ALTER TABLE ONLY public.sessions
 
 
 --
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
 -- Name: users users_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -341,11 +408,11 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: hashtags hashtags_postId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: likes likes_postId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.hashtags
-    ADD CONSTRAINT "hashtags_postId_fkey" FOREIGN KEY ("postId") REFERENCES public.posts(id);
+ALTER TABLE ONLY public.likes
+    ADD CONSTRAINT "likes_postId_fkey" FOREIGN KEY ("postId") REFERENCES public.posts(id);
 
 
 --
@@ -354,6 +421,22 @@ ALTER TABLE ONLY public.hashtags
 
 ALTER TABLE ONLY public.likes
     ADD CONSTRAINT "likes_userId_fkey" FOREIGN KEY ("userId") REFERENCES public.users(id);
+
+
+--
+-- Name: post_hashtags post_hashtags_postId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.post_hashtags
+    ADD CONSTRAINT "post_hashtags_postId_fkey" FOREIGN KEY ("postId") REFERENCES public.posts(id);
+
+
+--
+-- Name: post_hashtags post_hashtags_tagId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.post_hashtags
+    ADD CONSTRAINT "post_hashtags_tagId_fkey" FOREIGN KEY ("tagId") REFERENCES public.hashtags(id);
 
 
 --
