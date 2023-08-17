@@ -41,7 +41,23 @@ export async function getPostTags(postId) {
   return hashtagsQuery.rows.map((row) => row.name);
 }
 
-export async function getPosts(_, res) {
+export async function checkUserLikedPost(userId, postId) {
+  try {
+    const result = await db.query(
+      `SELECT COUNT(*) FROM likes WHERE "postId" = $1 AND "userId" = $2`,
+      [postId, userId]
+    );
+    const likeCount = parseInt(result.rows[0].count);
+    return likeCount > 0;
+  } catch (err) {
+    console.error("Error checking user like:", err);
+    return false;
+  }
+}
+
+export async function getPosts(req, res) {
+  const { userId } = req.body;
+
   try {
     const postsQuery = await db.query(
       `SELECT * FROM posts ORDER BY "createdAt" DESC`
@@ -63,17 +79,50 @@ export async function getPosts(_, res) {
 
         const hashtags = await getPostTags(post.id);
 
+        const liked = await checkUserLikedPost(userId, post.id);
+
         return {
           ...post,
           likes: likesCount,
           ownerUsername: user.username,
           ownerImage: user.image,
           hashtags: hashtags,
+          liked: liked,
         };
       })
     );
 
     res.status(200).json(posts);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
+export async function likePost(req, res) {
+  const { postId } = req.params;
+  const { userId } = req.body;
+
+  try {
+    await db.query(`INSERT INTO likes ("postId", "userId") VALUES ($1, $2)`, [
+      postId,
+      userId,
+    ]);
+    res.sendStatus(201);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
+export async function unlikePost(req, res) {
+  const { postId } = req.params;
+  const { userId } = req.body;
+
+  try {
+    await db.query(`DELETE FROM likes WHERE "postId" = $1 AND "userId" = $2`, [
+      postId,
+      userId,
+    ]);
+    res.sendStatus(200);
   } catch (err) {
     res.status(500).send(err.message);
   }
