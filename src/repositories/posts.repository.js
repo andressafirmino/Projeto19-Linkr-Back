@@ -23,12 +23,25 @@ export async function postTags(postId, tagId) {
 }
 
 export async function deletePostsRepository(postId) {
-    await db.query(`
-    DELETE FROM post_hashtags WHERE "postId" = $1;
-    `, [postId]);
+    try {
+        await db.query(`
+            DELETE FROM post_hashtags WHERE "postId" = $1;
+        `, [postId]);
 
-    await db.query(`
-    DELETE FROM posts WHERE "id" = $1;
-    `, [postId])
+        await db.query(`
+            DELETE FROM posts WHERE "id" = $1;
+        `, [postId])
+    } catch (err) {
+        throw err;
+    }
+}
 
+export async function updatePostsRepository(postId, link, description) {
+    try {
+        await db.query(`
+            UPDATE posts SET link = $1, description = $2 WHERE "id" = $3
+        `, [link, description, postId])
+    } catch(err) {
+        throw err;
+    }
 }
