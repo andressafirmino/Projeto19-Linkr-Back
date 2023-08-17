@@ -22,7 +22,7 @@ export async function postTags(postId, tagId) {
     return result;
 }
 
-export async function deletePost(postId, userId) {
+export async function deletePostsRepository(postId, userId) {
     await db.query(`
     DELETE FROM post_hashtags WHERE "postId" = $1;
     `, [postId]);
