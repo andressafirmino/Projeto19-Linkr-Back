@@ -2,6 +2,7 @@ import {
   postTags,
   publicHasthtag,
   publicPost,
+  deletePostsRepository
 } from "../repositories/posts.repository.js";
 
 export async function postHashtag(req, res) {
@@ -26,3 +27,14 @@ export async function postHashtag(req, res) {
     res.status(500).send(err.message);
   }
 }
+
+export async function deletePost(req, res){
+  const { id } = req.params;
+  try {
+    await deletePostsRepository(id);
+    res.sendStatus(204);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
