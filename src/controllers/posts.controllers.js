@@ -2,7 +2,8 @@ import {
   postTags,
   publicHasthtag,
   publicPost,
-  deletePostsRepository
+  deletePostsRepository,
+  updatePostsRepository
 } from "../repositories/posts.repository.js";
 
 export async function postHashtag(req, res) {
@@ -36,5 +37,40 @@ export async function deletePost(req, res){
   } catch (err) {
     res.status(500).send(err.message);
   }
+}
+
+export async function updatePost(req, res){
+  const { id: postId } = req.params;
+  const {link, description} = req.body;
+  try {
+      await updatePostsRepository(postId, link, description);
+      const existingHashtags = await getHashtagsForPost(postId);
+
+      const words = description.split(/\s+/);
+      for (const word of words) {
+        if (word.startsWith("#")) {
+          const noHashtag = word.replace(/^#/, "");
+
+          //verificar se a hashtag ja existe
+          const existingHashtags = existingHashtags.find(tag => tag.name === noHashtag );
+
+          if (existingHashtags){
+            //atualizar a hashtag existente se necessario
+            //check aqui
+            // criar algo no tipo await updateHashtag(existingHashtag.id, noHashtag)
+          } else {
+            // criar a nova 
+          }
+        }
+      }
+
+      // deletar as hastags que sairam nessa update
+
+
+    
+      res.sendStatus(204);
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
 }
 
