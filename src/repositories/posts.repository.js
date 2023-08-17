@@ -21,3 +21,14 @@ export async function postTags(postId, tagId) {
     `, [postId, tagId]);
     return result;
 }
+
+export async function deletePost(postId, userId) {
+    await db.query(`
+    DELETE FROM post_hashtags WHERE "postId" = $1;
+    `, [postId]);
+
+    await db.query(`
+    DELETE FROM posts WHERE "id" = $1;
+    `, [postId])
+
+}
