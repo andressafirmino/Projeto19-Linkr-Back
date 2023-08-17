@@ -2,6 +2,7 @@ import { Router } from "express";
 import { postHashtag } from "../controllers/posts.controllers.js";
 import validateSchema from "../middlewares/validationSchemas.middleswares.js";
 import { postsSchema } from "../schemas/posts.schemas.js";
+import { authenticateToken } from "../middlewares/validationToken.middlewares.js";
 
 const postsRouter = Router();
 
