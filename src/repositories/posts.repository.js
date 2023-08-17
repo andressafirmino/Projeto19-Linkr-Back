@@ -31,28 +31,49 @@ export async function postTags(postId, tagId) {
   return result;
 }
 
+export async function getPostTags(postId) {
+  const hashtagsQuery = await db.query(
+    `SELECT h.name FROM hashtags h
+     JOIN post_hashtags ph ON h.id = ph."tagId"
+     WHERE ph."postId" = $1`,
+    [postId]
+  );
+  return hashtagsQuery.rows.map((row) => row.name);
+}
+
 export async function getPosts(_, res) {
   try {
     const postsQuery = await db.query(
       `SELECT * FROM posts ORDER BY "createdAt" DESC`
     );
 
-    const posts = postsQuery.rows.map(async (post) => {
-      const likesQuery = await db.query(
-        `SELECT COUNT(*) FROM likes WHERE "postId" = $1`,
-        [post.id]
-      );
-      const likesCount = parseInt(likesQuery.rows[0].count);
+    const posts = await Promise.all(
+      postsQuery.rows.map(async (post) => {
+        const likesQuery = await db.query(
+          `SELECT COUNT(*) FROM likes WHERE "postId" = $1`,
+          [post.id]
+        );
+        const likesCount = parseInt(likesQuery.rows[0].count);
 
-      return {
-        ...post,
-        likes: likesCount,
-      };
-    });
+        const userQuery = await db.query(
+          `SELECT username, image FROM users WHERE id = $1`,
+          [post.userId]
+        );
+        const user = userQuery.rows[0];
 
-    const postsWithLikes = await Promise.all(posts);
+        const hashtags = await getPostTags(post.id);
 
-    res.status(200).json(postsWithLikes);
+        return {
+          ...post,
+          likes: likesCount,
+          ownerUsername: user.username,
+          ownerImage: user.image,
+          hashtags: hashtags,
+        };
+      })
+    );
+
+    res.status(200).json(posts);
   } catch (err) {
     res.status(500).send(err.message);
   }
