@@ -7,6 +7,6 @@ import { authenticateToken } from "../middlewares/validationToken.middlewares.js
 const postsRouter = Router();
 
 postsRouter.post("/timeline", validateSchema(postsSchema), postHashtag);
-postsRouter.delete("/post/:id", deletePost)
+postsRouter.delete("/timeline/:id", deletePost)
 
 export default postsRouter;
