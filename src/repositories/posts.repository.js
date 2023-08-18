@@ -59,6 +59,6 @@ export async function getPosts(_, res) {
 }
 
 export async function searchUserRepository(user) {
-    const result = db.query(`SELECT username FROM users WHERE username LIKE $1;`, [user]);
+    const result = await db.query(`SELECT * FROM users WHERE username LIKE $1;`, [user + '%']);
     return result;
 }

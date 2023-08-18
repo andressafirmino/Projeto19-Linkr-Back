@@ -35,7 +35,7 @@ export async function searchUser(req, res) {
 
     try {
         const users = await searchUserRepository(user);
-        res.send(users.rows[0]);
+        res.send(users.rows);
     } catch (err) {
         res.status(500).send(err.message);
       }
