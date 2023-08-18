@@ -64,18 +64,34 @@ export async function searchUserRepository(user) {
 }
 
 export async function deletePostsRepository(postId) {
-    try {
-        await db.query(`
-            DELETE FROM post_hashtags WHERE "postId" = $1;
-        `, [postId]);
+    const hashtagsToDelete = await db.query(
+      `SELECT "tagId" FROM post_hashtags WHERE "postId" = $1;`,
+      [postId]
+    );
 
-        await db.query(`
-            DELETE FROM posts WHERE "id" = $1;
-        `, [postId])
-    } catch (err) {
-        throw err;
+    await db.query(`DELETE FROM post_hashtags WHERE "postId" = $1;`, [postId]);
+    await db.query(`DELETE FROM likes WHERE "postId" = $1;`, [postId]);
+
+    for (const hashtag of hashtagsToDelete.rows) {
+      const hashtagId = hashtag.tagId;
+      const hashtagNameQuery = await db.query(
+        `SELECT "name" FROM hashtags WHERE "id" = $1`,
+        [hashtagId]
+      );
+
+      const hashtagName = hashtagNameQuery.rows[0].name;
+      const countQuery = await db.query(
+        `SELECT COUNT(*) AS count FROM hashtags WHERE "name" = $1`,
+        [hashtagName]
+      );
+      if (countQuery.rows[0].count === "1") {
+        await db.query(`DELETE FROM hashtags WHERE "id" = $1`, [hashtagId]);
+      }
     }
+
+    await db.query(`DELETE FROM posts WHERE "id" = $1;`, [postId]);
 }
+
 
 export async function updatePostsRepository(postId, link, description) {
     try {
@@ -83,6 +99,6 @@ export async function updatePostsRepository(postId, link, description) {
             UPDATE posts SET link = $1, description = $2 WHERE "id" = $3
         `, [link, description, postId])
     } catch(err) {
-        throw err;
+      res.status(500).send(err.message);
     }
 }
