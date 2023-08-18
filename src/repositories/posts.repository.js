@@ -78,3 +78,8 @@ export async function getPosts(_, res) {
     res.status(500).send(err.message);
   }
 }
+
+export async function searchUserRepository(user) {
+    const result = await db.query(`SELECT * FROM users WHERE username LIKE $1;`, [user + '%']);
+    return result;
+}
