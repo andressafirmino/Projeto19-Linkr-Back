@@ -56,7 +56,7 @@ export async function checkUserLikedPost(userId, postId) {
 }
 
 export async function getPosts(req, res) {
-  const { userId } = req.body;
+  const { userId } = req.query;
 
   try {
     const postsQuery = await db.query(
