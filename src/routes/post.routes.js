@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { postHashtag, searchUser } from "../controllers/posts.controllers.js";
+import {
+  getPostByTag,
+  postHashtag,
+  searchUser,
+} from "../controllers/posts.controllers.js";
 import validateSchema from "../middlewares/validationSchemas.middleswares.js";
 import { postsSchema } from "../schemas/posts.schemas.js";
 import {
@@ -23,5 +27,6 @@ postsRouter.post(
   postHashtag
 );
 postsRouter.get("/search", searchUser);
+postsRouter.get("/hashtag/:hashtag/:id", getPostByTag);
 
 export default postsRouter;
