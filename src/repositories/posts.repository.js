@@ -134,3 +134,41 @@ export async function searchUserRepository(user) {
   ]);
   return result;
 }
+
+export async function getTagByName(id, hashtag) {
+  const posts = db.query(
+    `SELECT
+      "p"."id",
+      "p"."link",
+      "p"."description",
+      "p"."userId",
+      "p"."createdAt",
+    COUNT("l"."id") AS "likes",
+      "u"."username" AS "ownerUsername",
+      "u"."image" AS "ownerImage",
+    ARRAY_AGG("h"."name") AS "hashtags",
+    CASE
+      WHEN EXISTS (SELECT 1 FROM "likes" WHERE "postId" = "p"."id" AND "userId" = $1) THEN TRUE
+      ELSE FALSE
+    END AS "liked"
+    FROM
+      "posts" "p"
+    JOIN
+      "users" "u" ON "p"."userId" = "u"."id"
+    LEFT JOIN
+      "likes" "l" ON "p"."id" = "l"."postId"
+    JOIN
+      "post_hashtags" "ph" ON "p"."id" = "ph"."postId"
+    JOIN
+      "hashtags" "h" ON "ph"."tagId" = "h"."id"
+    WHERE
+      "h"."name" = $2
+    GROUP BY
+      "p"."id", "p"."link", "p"."description", "p"."userId", "p"."createdAt", "u"."username", "u"."image"
+    ORDER BY
+      "p"."createdAt" DESC;
+    `,
+    [id, hashtag]
+  );
+  return posts;
+}
