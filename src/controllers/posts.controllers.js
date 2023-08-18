@@ -2,6 +2,7 @@ import {
   postTags,
   publicHasthtag,
   publicPost,
+  searchUserRepository,
 } from "../repositories/posts.repository.js";
 
 export async function postHashtag(req, res) {
@@ -10,19 +11,32 @@ export async function postHashtag(req, res) {
   try {
     const idPost = await publicPost(link, description, userId);
     const words = description.split(/\s+/);
-    words.forEach(async (word) => {
+    const hashtagPromises = words.map(async (word) => {
       if (word.startsWith("#")) {
         try {
           const noHashtag = word.replace(/^#/, "");
           const insertHash = await publicHasthtag(noHashtag);
+          console.log(noHashtag)
           await postTags(idPost.rows[0].id, insertHash.rows[0].id);
         } catch (err) {
           res.status(500).send(err.message);
         }
       }
     });
+    await Promise.all(hashtagPromises);
     res.sendStatus(201);
   } catch (err) {
     res.status(500).send(err.message);
   }
+}
+
+export async function searchUser(req, res) {
+    const {user} = req.query;
+
+    try {
+        const users = await searchUserRepository(user);
+        res.send(users.rows[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+      }
 }
