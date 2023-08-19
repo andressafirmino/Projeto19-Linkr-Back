@@ -7,7 +7,7 @@ import {
   deletePostsRepository,
   updatePostRepository
 } from "../repositories/posts.repository.js";
-import { getHashtags, deleteHashtags, getPostHashtagsNames } from "../repositories/hashtags.repository.js";
+import { getHashtags, deleteHashtags, getPostHashtagsNames, getHashtagIdByName, checkHashtagExists  } from "../repositories/hashtags.repository.js";
 import { getPostHashtags,   deleteInPostHashtags, getCountPostHashtags, 
 } from "../repositories/post_hashtags.repository.js";
 
@@ -21,10 +21,16 @@ export async function postHashtag(req, res) {
       if (word.startsWith("#")) {
         try {
           const noHashtag = word.replace(/^#/, "");
-          const insertHash = await publicHasthtag(noHashtag);
-          await postTags(idPost.rows[0].id, insertHash.rows[0].id);
+          let hashtagId = await getHashtagIdByName(noHashtag);
+
+          if (hashtagId === null) {
+            const insertHash = await publicHasthtag(noHashtag);
+            hashtagId = insertHash.rows[0].id;
+          }
+
+          await postTags(idPost.rows[0].id, hashtagId);
         } catch (err) {
-          res.status(500).send(err.message);
+          throw err; // Lança o erro para ser tratado no catch mais externo
         }
       }
     });
