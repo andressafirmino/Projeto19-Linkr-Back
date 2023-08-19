@@ -2,6 +2,7 @@ import {
   postTags,
   publicHasthtag,
   publicPost,
+  getTagByName,
   searchUserRepository,
   deletePostsRepository,
   updatePostRepository,
@@ -94,13 +95,25 @@ export async function updatePost(req, res) {
 }
 
 export async function searchUser(req, res) {
-    const {user} = req.query;
+  const { user } = req.query;
 
-    try {
-        const users = await searchUserRepository(user);
-        res.send(users.rows);
-    } catch (err) {
-        res.status(500).send(err.message);
-      }
+  try {
+    const users = await searchUserRepository(user);
+    res.send(users.rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 }
 
+export async function getPostByTag(req, res) {
+  const { hashtag } = req.params;
+  const { id } = req.params;
+
+  try {
+    const result = await getTagByName(id, hashtag);
+
+    res.status(200).send(result.rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
