@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getPostByTag,
   postHashtag,
-  searchUser, deletePost, updatePost,
+  searchUser, deletePost, updatePost, getTrendingHashtags
 } from "../controllers/posts.controllers.js";
 import validateSchema from "../middlewares/validationSchemas.middleswares.js";
 import { postsSchema } from "../schemas/posts.schemas.js";
@@ -26,5 +26,6 @@ postsRouter.put("/post/:id", authenticateToken, validateSchema(postsSchema), upd
 postsRouter.get("/", getPosts);
 postsRouter.get("/search", searchUser);
 postsRouter.get("/hashtag/:hashtag/:id", getPostByTag);
+postsRouter.get("/trending", getTrendingHashtags);
 
 export default postsRouter;

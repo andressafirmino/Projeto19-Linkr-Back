@@ -30,3 +30,15 @@ export async function deleteInPostHashtagById(postId){
   await db.query(`DELETE FROM likes WHERE "postId" = $1;`, [postId]);
   await db.query(`DELETE FROM post_hashtags WHERE "postId" = $1;`, [postId]);
 }
+
+export async function getMostUsedHashtags(){
+  return await db.query(
+    `SELECT h.name AS hashtag, COUNT(ph."tagId") AS count
+    FROM hashtags h
+    INNER JOIN post_hashtags ph ON h.id = ph."tagId"
+    GROUP BY h.name
+    ORDER BY count DESC
+    LIMIT 10;    
+    `
+  );
+}
