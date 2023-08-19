@@ -5,13 +5,11 @@ import {
   getTagByName,
   searchUserRepository,
   deletePostsRepository,
-  updatePostRepository,
-  getPostHashtags,
-  getPostHashtagsNames,
-  deleteInPostHashtags,
-  deleteHashtags,
-  getHashtags,getCountPostHashtags
+  updatePostRepository
 } from "../repositories/posts.repository.js";
+import { getHashtags, deleteHashtags, getPostHashtagsNames } from "../repositories/hashtags.repository.js";
+import { getPostHashtags,   deleteInPostHashtags, getCountPostHashtags, 
+} from "../repositories/post_hashtags.repository.js";
 
 export async function postHashtag(req, res) {
   const { link, description, userId } = req.body;
