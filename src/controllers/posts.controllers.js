@@ -4,7 +4,12 @@ import {
   publicPost,
   searchUserRepository,
   deletePostsRepository,
-  updatePostsRepository
+  updatePostRepository,
+  getPostHashtags,
+  getPostHashtagsNames,
+  deleteInPostHashtags,
+  deleteHashtags,
+  getHashtags,getCountPostHashtags
 } from "../repositories/posts.repository.js";
 
 export async function postHashtag(req, res) {
@@ -18,7 +23,6 @@ export async function postHashtag(req, res) {
         try {
           const noHashtag = word.replace(/^#/, "");
           const insertHash = await publicHasthtag(noHashtag);
-          console.log(noHashtag)
           await postTags(idPost.rows[0].id, insertHash.rows[0].id);
         } catch (err) {
           res.status(500).send(err.message);
@@ -42,39 +46,51 @@ export async function deletePost(req, res){
   }
 }
 
-export async function updatePost(req, res){
+export async function updatePost(req, res) {
   const { id: postId } = req.params;
-  const {link, description} = req.body;
+  const { link, description } = req.body;
   try {
-      await updatePostsRepository(postId, link, description);
-      const existingHashtags = await getHashtagsForPost(postId);
-
-      const words = description.split(/\s+/);
-      for (const word of words) {
-        if (word.startsWith("#")) {
-          const noHashtag = word.replace(/^#/, "");
-
-          //verificar se a hashtag ja existe
-          const existingHashtags = existingHashtags.find(tag => tag.name === noHashtag );
-
-          if (existingHashtags){
-            //atualizar a hashtag existente se necessario
-            //check aqui
-            // criar algo no tipo await updateHashtag(existingHashtag.id, noHashtag)
-          } else {
-            // criar a nova 
-          }
-        }
-      }
-
-      // deletar as hastags que sairam nessa update
-
-
+    const currentHashtagsId = await getPostHashtags(postId);
+    const words = description.split(/\s+/);
+    const newHashtags = [];
     
-      res.sendStatus(204);
-    } catch (err) {
-      res.status(500).send(err.message);
+    words.forEach((word) => {
+      if (word.startsWith("#")) {
+        const noHashtag = word.replace(/^#/, "");
+        newHashtags.push(noHashtag);
+      }
+    });
+    const currentHashtagsName = await getPostHashtagsNames(currentHashtagsId)
+
+    const itensInNewHashtags = newHashtags.filter(item => !currentHashtagsName.includes(item));
+    const itensInCurrentHashtagsName = currentHashtagsName.filter(item => !newHashtags.includes(item));
+
+    for (const hashtag of itensInNewHashtags) {
+      const result = await publicHasthtag(hashtag);
+      const hashtagId = result.rows[0].id;
+      await postTags(postId, hashtagId);
+    }   
+
+    for (const hashtagName of itensInCurrentHashtagsName) {
+
+      const hashtagIdQuery = await getHashtags(hashtagName); 
+      const hashtagId = hashtagIdQuery.rows[0].id;
+      const postHashtagsCountQuery = await getCountPostHashtags(hashtagId, postId)
+      const postHashtagsCount = postHashtagsCountQuery.rows[0].count;
+    
+      if (postHashtagsCount === "0") {
+        await deleteInPostHashtags(hashtagId, postId)
+        await deleteHashtags(hashtagId)
+      } else {
+        await deleteInPostHashtags(hashtagId, postId)
+      }
     }
+
+    await updatePostRepository(postId, link, description);
+    res.sendStatus(200);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 }
 
 export async function searchUser(req, res) {
