@@ -7,8 +7,9 @@ import {
   deletePostsRepository,
   updatePostRepository
 } from "../repositories/posts.repository.js";
-import { getHashtags, deleteHashtags, getPostHashtagsNames, getHashtagIdByName  } from "../repositories/hashtags.repository.js";
-import { getPostHashtags,   deleteInPostHashtags, getCountPostHashtags, getAllPostHashtags, deleteInPostHashtagById
+
+import { getHashtags, deleteHashtags, getPostHashtagsNames, getHashtagIdByName, checkAndDeleteHashtags  } from "../repositories/hashtags.repository.js";
+import { getPostHashtags,   deleteInPostHashtags, getCountPostHashtags, getAllPostHashtags, deleteInPostHashtagById, getMostUsedHashtags
 } from "../repositories/post_hashtags.repository.js";
 
 export async function postHashtag(req, res) {
@@ -127,6 +128,21 @@ export async function getPostByTag(req, res) {
     const result = await getTagByName(id, hashtag);
 
     res.status(200).send(result.rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
+export async function getTrendingHashtags(req, res) {
+  try {
+    const trendingHashtags = await getMostUsedHashtags();
+
+    const formattedResponse = trendingHashtags.rows.map((row) => ({
+      hashtag: row.hashtag,
+      count: row.count,
+    }));
+
+    res.status(200).json(formattedResponse);
   } catch (err) {
     res.status(500).send(err.message);
   }
