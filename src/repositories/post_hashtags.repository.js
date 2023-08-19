@@ -18,3 +18,15 @@ export async function getPostHashtags(postId) {
   );
   return result.rows.map((row) => row.tagId);
 }
+
+export async function getAllPostHashtags(postId){
+  return await db.query(
+    `SELECT "tagId" FROM post_hashtags WHERE "postId" = $1;`,
+    [postId]
+  );
+}
+
+export async function deleteInPostHashtagById(postId){
+  await db.query(`DELETE FROM likes WHERE "postId" = $1;`, [postId]);
+  await db.query(`DELETE FROM post_hashtags WHERE "postId" = $1;`, [postId]);
+}

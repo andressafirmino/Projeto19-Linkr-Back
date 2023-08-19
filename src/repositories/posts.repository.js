@@ -173,30 +173,7 @@ export async function getTagByName(id, hashtag) {
   return posts;
 }
 
-//refactor
 export async function deletePostsRepository(postId) {
-    const hashtagsToDelete = await db.query(
-      `SELECT "tagId" FROM post_hashtags WHERE "postId" = $1;`,
-      [postId]
-    );
-    await db.query(`DELETE FROM post_hashtags WHERE "postId" = $1;`, [postId]);
-    await db.query(`DELETE FROM likes WHERE "postId" = $1;`, [postId]);
-    for (const hashtag of hashtagsToDelete.rows) {
-      const hashtagId = hashtag.tagId;
-      const hashtagNameQuery = await db.query(
-        `SELECT "name" FROM hashtags WHERE "id" = $1`,
-        [hashtagId]
-      );
-
-      const hashtagName = hashtagNameQuery.rows[0].name;
-      const countQuery = await db.query(
-        `SELECT COUNT(*) AS count FROM hashtags WHERE "name" = $1`,
-        [hashtagName]
-      );
-      if (countQuery.rows[0].count === "1") {
-        await db.query(`DELETE FROM hashtags WHERE "id" = $1`, [hashtagId]);
-      }
-    }
     await db.query(`DELETE FROM posts WHERE "id" = $1;`, [postId]);
 }
 

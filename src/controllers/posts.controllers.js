@@ -7,8 +7,8 @@ import {
   deletePostsRepository,
   updatePostRepository
 } from "../repositories/posts.repository.js";
-import { getHashtags, deleteHashtags, getPostHashtagsNames, getHashtagIdByName, checkHashtagExists  } from "../repositories/hashtags.repository.js";
-import { getPostHashtags,   deleteInPostHashtags, getCountPostHashtags, 
+import { getHashtags, deleteHashtags, getPostHashtagsNames, getHashtagIdByName, checkAndDeleteHashtags  } from "../repositories/hashtags.repository.js";
+import { getPostHashtags,   deleteInPostHashtags, getCountPostHashtags, getAllPostHashtags, deleteInPostHashtagById
 } from "../repositories/post_hashtags.repository.js";
 
 export async function postHashtag(req, res) {
@@ -42,9 +42,19 @@ export async function postHashtag(req, res) {
 }
 
 export async function deletePost(req, res){
-  const { id } = req.params;
+  const { id: postId } = req.params;
   try {
-    await deletePostsRepository(id);
+    const hashtagsToDelete = await getAllPostHashtags(postId);
+    await deleteInPostHashtagById(postId);
+    for (const hashtag of hashtagsToDelete.rows) {
+      const hashtagId = hashtag.tagId;
+      const countPostHashtags = (await getCountPostHashtags(hashtagId, postId)).rows[0].count
+      if (countPostHashtags === "0") {
+        deleteHashtags(hashtagId);
+      }
+    }
+
+    await  deletePostsRepository(postId);
     res.sendStatus(204);
   } catch (err) {
     res.status(500).send(err.message);
