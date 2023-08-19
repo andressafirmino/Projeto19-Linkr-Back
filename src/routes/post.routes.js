@@ -26,8 +26,8 @@ postsRouter.post(
   validateSchema(postsSchema),
   postHashtag
 );
-postsRouter.delete("/timeline/:id", authenticateToken, deletePost)
-postsRouter.put("/timeline/:id", authenticateToken, validateSchema(postsSchema), updatePost);
+postsRouter.delete("/post/:id", authenticateToken, deletePost)
+postsRouter.put("/post/:id", authenticateToken, validateSchema(postsSchema), updatePost);
 postsRouter.get("/", getPosts);
 postsRouter.get("/search", searchUser);
 postsRouter.get("/hashtag/:hashtag/:id", getPostByTag);
