@@ -8,7 +8,7 @@ import {
   updatePostRepository
 } from "../repositories/posts.repository.js";
 
-import { getHashtags, deleteHashtags, getPostHashtagsNames, getHashtagIdByName } from "../repositories/hashtags.repository.js";
+import { getHashtags, deleteHashtags, getPostHashtagsNames, getHashtagIdByName, checkAndDeleteHashtags  } from "../repositories/hashtags.repository.js";
 import { getPostHashtags,   deleteInPostHashtags, getCountPostHashtags, getAllPostHashtags, deleteInPostHashtagById, getMostUsedHashtags
 } from "../repositories/post_hashtags.repository.js";
 
