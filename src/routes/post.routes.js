@@ -13,6 +13,7 @@ import {
   unlikePost,
 } from "../repositories/posts.repository.js";
 import { authenticateToken } from "../middlewares/validationToken.middlewares.js";
+import { updateSchema } from "../schemas/update.schemas.js";
 
 const postsRouter = Router();
 
@@ -22,7 +23,7 @@ postsRouter.post("/like/:postId", likePost);
 postsRouter.delete("/unlike/:postId", unlikePost);
 postsRouter.post("/timeline", authenticateToken, validateSchema(postsSchema), postHashtag);
 postsRouter.delete("/post/:id", authenticateToken, deletePost)
-postsRouter.put("/post/:id", authenticateToken, validateSchema(postsSchema), updatePost);
+postsRouter.put("/post/:id", authenticateToken, validateSchema(updateSchema), updatePost);
 postsRouter.get("/", getPosts);
 postsRouter.get("/search", searchUser);
 postsRouter.get("/hashtag/:hashtag/:id", getPostByTag);

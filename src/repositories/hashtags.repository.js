@@ -17,16 +17,6 @@ export async function getPostHashtagsNames(currentHashtagsId) {
   return hashtagsNames;
 }
 
-
-// export async function checkHashtagExists(hashtagName) {
-//   const result = await db.query(
-//     `SELECT COUNT(*) AS count FROM hashtags WHERE "name" = $1`,
-//     [hashtagName]
-//   );
-
-//   return result.rows[0].count > 0;
-// }
-
 export async function getHashtagIdByName(hashtagName) {
   const result = await db.query(
     `SELECT "id" FROM hashtags WHERE "name" = $1`,
@@ -39,8 +29,3 @@ export async function getHashtagIdByName(hashtagName) {
     return null; 
   }
 }
-
-export async function checkAndDeleteHashtags(hashtagsToDelete){
-    
-}
-

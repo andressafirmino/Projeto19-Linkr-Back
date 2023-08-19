@@ -177,11 +177,10 @@ export async function deletePostsRepository(postId) {
     await db.query(`DELETE FROM posts WHERE "id" = $1;`, [postId]);
 }
 
-export async function updatePostRepository(postId, link, description) {
-  // Atualizar informações do post
+export async function updatePostRepository(postId, description) {
   await db.query(
-    'UPDATE posts SET link = $1, description = $2 WHERE "id" = $3',
-    [link, description, postId]
+    'UPDATE posts SET description = $1 WHERE "id" = $2',
+    [description, postId]
   );
 }
 

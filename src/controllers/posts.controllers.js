@@ -7,6 +7,7 @@ import {
   deletePostsRepository,
   updatePostRepository
 } from "../repositories/posts.repository.js";
+
 import { getHashtags, deleteHashtags, getPostHashtagsNames, getHashtagIdByName, checkAndDeleteHashtags  } from "../repositories/hashtags.repository.js";
 import { getPostHashtags,   deleteInPostHashtags, getCountPostHashtags, getAllPostHashtags, deleteInPostHashtagById, getMostUsedHashtags
 } from "../repositories/post_hashtags.repository.js";
@@ -63,7 +64,7 @@ export async function deletePost(req, res){
 
 export async function updatePost(req, res) {
   const { id: postId } = req.params;
-  const { link, description } = req.body;
+  const { description } = req.body;
   try {
     const currentHashtagsId = await getPostHashtags(postId);
     const words = description.split(/\s+/);
@@ -101,7 +102,7 @@ export async function updatePost(req, res) {
       }
     }
 
-    await updatePostRepository(postId, link, description);
+    await updatePostRepository(postId, description);
     res.sendStatus(200);
   } catch (err) {
     res.status(500).send(err.message);
