@@ -1,14 +1,13 @@
 import { db } from "../database/database.connection.js";
+import { userPosts, userInfo } from "../repositories/posts.repository.js";
 
 export async function getPostsFromUser(req, res) {
   const { id } = req.params;
 
   try {
-    const postsQuery = `SELECT * FROM posts WHERE "userId" = $1`;
-    const postsResult = await db.query(postsQuery, [id]);
+    const postsResult = await userPosts(id);
 
-    const userQuery = `SELECT username, image FROM users WHERE id = $1`;
-    const userResult = await db.query(userQuery, [id]);
+    const userResult = await userInfo(id);
 
     if (userResult.rowCount === 0) {
       return res.status(404).send("Usuário não encontrado");

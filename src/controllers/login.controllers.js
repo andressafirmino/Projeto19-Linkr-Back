@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
-import { getLogin, session } from "../repositories/login.repository.js";
+import { getLogin, session, checkEmail, postSignUp } from "../repositories/login.repository.js";
 import { db } from "../database/database.connection.js";
 
 export async function login(req, res) {
@@ -35,9 +35,8 @@ export async function login(req, res) {
 export async function signUp(req, res) {
   const { username, email, password, image } = req.body;
   try {
-    const userExists = await db.query(`SELECT id FROM users WHERE email = $1`, [
-      email,
-    ]);
+    const userExists = await checkEmail(email);
+
     if (userExists.rowCount > 0)
       return res.status(409).send("Já existe um usuário com esse email");
 
@@ -46,10 +45,7 @@ export async function signUp(req, res) {
 
     const hashPassword = bcrypt.hashSync(password, 10);
 
-    await db.query(
-      `INSERT INTO users (username, email, password, image) VALUES ($1, $2, $3, $4)`,
-      [username, email, hashPassword, image]
-    );
+    await postSignUp(username, email, hashPassword, image);
 
     res.status(201).send("Usuário cadastrado com sucesso");
   } catch (err) {
