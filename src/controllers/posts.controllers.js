@@ -16,8 +16,16 @@ export async function postHashtag(req, res) {
   const { link, description, userId } = req.body;
 
   try {
-    const idPost = await publicPost(link, description, userId);
+    let text = '';
     const words = description.split(/\s+/);
+    words.map(async (word) => {
+      if(!word.startsWith("#")) {
+        text += word + ' ';
+      }
+    })
+    console.log(text);
+    const idPost = await publicPost(link, text, userId);
+    
     const hashtagPromises = words.map(async (word) => {
       if (word.startsWith("#")) {
         try {
