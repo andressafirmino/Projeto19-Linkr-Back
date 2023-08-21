@@ -184,6 +184,20 @@ export async function updatePostRepository(postId, description) {
   );
 }
 
+export async function userPosts(userId) {
+  const result = await db.query(`SELECT * FROM posts WHERE "userId" = $1;`,
+    [userId],
+  );
+  return result;
+}
+
+export async function userInfo(id) {
+  const result = await db.query(`SELECT username, image FROM users WHERE id = $1;`,
+    [id],
+  );
+  return result;
+}
+
 
 
 
