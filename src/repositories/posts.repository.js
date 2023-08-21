@@ -1,4 +1,5 @@
 import { db } from "../database/database.connection.js";
+import urlMetadata from "url-metadata";
 
 export async function publicPost(link, description, userId) {
   const result = db.query(
@@ -55,6 +56,20 @@ export async function checkUserLikedPost(userId, postId) {
   }
 }
 
+async function getUrlMetaData(url) {
+  try {
+    const metadata = await urlMetadata(url);
+    return {
+      title: metadata.title,
+      description: metadata.description,
+      image: metadata.image,
+    };
+  } catch (error) {
+    console.error('Erro ao obter metadados da URL:', error);
+    return null;
+  }
+}
+
 export async function getPosts(req, res) {
   const { userId } = req.query;
 
@@ -81,6 +96,8 @@ export async function getPosts(req, res) {
 
         const liked = await checkUserLikedPost(userId, post.id);
 
+        const urlData = await getUrlMetaData(post.link);
+
         return {
           ...post,
           likes: likesCount,
@@ -88,6 +105,7 @@ export async function getPosts(req, res) {
           ownerImage: user.image,
           hashtags: hashtags,
           liked: liked,
+          urlData: urlData,
         };
       })
     );
@@ -97,6 +115,7 @@ export async function getPosts(req, res) {
     res.status(500).send(err.message);
   }
 }
+
 
 export async function likePost(req, res) {
   const { postId } = req.params;

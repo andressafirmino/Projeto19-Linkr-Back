@@ -155,3 +155,4 @@ export async function getTrendingHashtags(req, res) {
     res.status(500).send(err.message);
   }
 }
+
