@@ -126,7 +126,7 @@ export async function getPostsRefactor(req, res) {
       COALESCE(r."userId", p."userId") AS "ownerUserId",
       COALESCE(u.username, ru.username) AS "ownerUsername",
       COALESCE(u.image, ru.image) AS "ownerImage",
-      COUNT(l.id) AS likesCount,
+      COUNT(l.id) AS likes,
       ARRAY_AGG(h.name) AS hashtags,
       CASE WHEN EXISTS (
           SELECT 1
@@ -206,8 +206,9 @@ export async function searchUserRepository(user) {
 }
 
 export async function getTagByName(id, hashtag) {
-  const posts = db.query(
-    `SELECT
+  try {
+    const postsQuery = await db.query(
+      `SELECT
       "p"."id",
       "p"."link",
       "p"."description",
@@ -238,9 +239,22 @@ export async function getTagByName(id, hashtag) {
     ORDER BY
       "p"."createdAt" DESC;
     `,
-    [id, hashtag]
-  );
-  return posts;
+      [id, hashtag]
+    );
+    const posts = await Promise.all(
+      postsQuery.rows.map(async (post) => {
+        const urlData = await getUrlMetaData(post.link);
+
+        return {
+          ...post,
+          urlData: urlData,
+        };
+      })
+    );
+    return posts;
+  } catch (err) {
+    console.log(err.message);
+  }
 }
 
 export async function deletePostsRepository(postId) {
