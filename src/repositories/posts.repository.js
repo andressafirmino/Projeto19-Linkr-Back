@@ -36,8 +36,8 @@ export async function postTags(postId, tagId) {
 export async function getPostTags(postId) {
   const hashtagsQuery = await db.query(
     `SELECT h.name FROM hashtags h
-     JOIN post_hashtags ph ON h.id = ph."tagId"
-     WHERE ph."postId" = $1`,
+    JOIN post_hashtags ph ON h.id = ph."tagId"
+    WHERE ph."postId" = $1`,
     [postId]
   );
   return hashtagsQuery.rows.map((row) => row.name);
@@ -61,14 +61,8 @@ async function getUrlMetaData(url) {
   try {
     const meta = await axios.get(`https://jsonlink.io/api/extract?url=${url}`);
     return meta.data;
-    // const metadata = await urlMetadata(url);
-    // return {
-    //   title: metadata.title,
-    //   description: metadata.description,
-    //   image: metadata.image,
-    // };
   } catch (error) {
-    // console.error("Erro ao obter metadados da URL:", error);
+    console.error("Erro ao obter metadados da URL:", error);
     return null;
   }
 }
@@ -108,6 +102,61 @@ export async function getPosts(req, res) {
           ownerImage: user.image,
           hashtags: hashtags,
           liked: liked,
+          urlData: urlData,
+        };
+      })
+    );
+
+    res.status(200).json(posts);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
+//! FUNÇÃO getPostsRefactor
+//? PEGA OS POSTS E OS RE_POSTS
+export async function getPostsRefactor(req, res) {
+  const { userId } = req.query;
+
+  try {
+    const postsQuery = await db.query(
+      `
+      SELECT
+      p.*,
+      COALESCE(r."userId", p."userId") AS "ownerUserId",
+      COALESCE(u.username, ru.username) AS "ownerUsername",
+      COALESCE(u.image, ru.image) AS "ownerImage",
+      COUNT(l.id) AS likesCount,
+      ARRAY_AGG(h.name) AS hashtags,
+      CASE WHEN EXISTS (
+          SELECT 1
+          FROM likes
+          WHERE likes."postId" = p.id AND likes."userId" = $1
+      ) THEN true ELSE false END AS liked,
+      CASE WHEN EXISTS (
+          SELECT 1
+          FROM "rePosts"
+          WHERE "rePosts"."postId" = p.id AND "rePosts"."userId" = $1
+      ) THEN true ELSE false END AS reposted
+      FROM posts p
+      LEFT JOIN "rePosts" r ON p.id = r."postId"
+      LEFT JOIN users u ON p."userId" = u.id
+      LEFT JOIN users ru ON r."userId" = ru.id
+      LEFT JOIN likes l ON p.id = l."postId"
+      LEFT JOIN post_hashtags ph ON p.id = ph."postId"
+      LEFT JOIN hashtags h ON ph."tagId" = h.id
+      GROUP BY p.id, "ownerUserId", "ownerUsername", "ownerImage"
+      ORDER BY "createdAt" DESC;
+      `,
+      [userId]
+    );
+
+    const posts = await Promise.all(
+      postsQuery.rows.map(async (post) => {
+        const urlData = await getUrlMetaData(post.link);
+
+        return {
+          ...post,
           urlData: urlData,
         };
       })
