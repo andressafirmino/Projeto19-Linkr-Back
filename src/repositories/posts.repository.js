@@ -1,5 +1,6 @@
 import { db } from "../database/database.connection.js";
 import urlMetadata from "url-metadata";
+import axios from "axios";
 
 export async function publicPost(link, description, userId) {
   const result = db.query(
@@ -58,14 +59,16 @@ export async function checkUserLikedPost(userId, postId) {
 
 async function getUrlMetaData(url) {
   try {
-    const metadata = await urlMetadata(url);
-    return {
-      title: metadata.title,
-      description: metadata.description,
-      image: metadata.image,
-    };
+    const meta = await axios.get(`https://jsonlink.io/api/extract?url=${url}`);
+    return meta.data;
+    // const metadata = await urlMetadata(url);
+    // return {
+    //   title: metadata.title,
+    //   description: metadata.description,
+    //   image: metadata.image,
+    // };
   } catch (error) {
-    console.error('Erro ao obter metadados da URL:', error);
+    // console.error("Erro ao obter metadados da URL:", error);
     return null;
   }
 }
@@ -115,7 +118,6 @@ export async function getPosts(req, res) {
     res.status(500).send(err.message);
   }
 }
-
 
 export async function likePost(req, res) {
   const { postId } = req.params;
@@ -193,39 +195,27 @@ export async function getTagByName(id, hashtag) {
 }
 
 export async function deletePostsRepository(postId) {
-    await db.query(`DELETE FROM posts WHERE "id" = $1;`, [postId]);
+  await db.query(`DELETE FROM posts WHERE "id" = $1;`, [postId]);
 }
 
 export async function updatePostRepository(postId, description) {
-  await db.query(
-    'UPDATE posts SET description = $1 WHERE "id" = $2',
-    [description, postId]
-  );
+  await db.query('UPDATE posts SET description = $1 WHERE "id" = $2', [
+    description,
+    postId,
+  ]);
 }
 
 export async function userPosts(userId) {
-  const result = await db.query(`SELECT * FROM posts WHERE "userId" = $1;`,
-    [userId],
-  );
+  const result = await db.query(`SELECT * FROM posts WHERE "userId" = $1;`, [
+    userId,
+  ]);
   return result;
 }
 
 export async function userInfo(id) {
-  const result = await db.query(`SELECT username, image FROM users WHERE id = $1;`,
-    [id],
+  const result = await db.query(
+    `SELECT username, image FROM users WHERE id = $1;`,
+    [id]
   );
   return result;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
