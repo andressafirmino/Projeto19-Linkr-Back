@@ -151,8 +151,7 @@ export async function getPostByTag(req, res) {
 
   try {
     const result = await getTagByName(id, hashtag);
-
-    res.status(200).send(result.rows);
+    res.status(200).send(result);
   } catch (err) {
     res.status(500).send(err.message);
   }
