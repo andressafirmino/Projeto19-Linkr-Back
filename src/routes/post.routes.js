@@ -21,7 +21,7 @@ import { updateSchema } from "../schemas/update.schemas.js";
 
 const postsRouter = Router();
 
-postsRouter.get("/posts", getPosts);
+postsRouter.get("/posts", getPostsRefactor);
 postsRouter.get("/checkLike", checkUserLikedPost);
 postsRouter.post("/like/:postId", likePost);
 postsRouter.delete("/unlike/:postId", unlikePost);

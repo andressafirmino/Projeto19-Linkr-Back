@@ -126,18 +126,25 @@ export async function getPostsRefactor(req, res) {
       COALESCE(r."userId", p."userId") AS "ownerUserId",
       COALESCE(u.username, ru.username) AS "ownerUsername",
       COALESCE(u.image, ru.image) AS "ownerImage",
-      COUNT(l.id) AS likesCount,
+      COUNT(l.id) AS likes,
       ARRAY_AGG(h.name) AS hashtags,
       CASE WHEN EXISTS (
-          SELECT 1
-          FROM likes
-          WHERE likes."postId" = p.id AND likes."userId" = $1
+        SELECT 1
+        FROM likes
+        WHERE likes."postId" = p.id AND likes."userId" = $1
       ) THEN true ELSE false END AS liked,
-      CASE WHEN EXISTS (
-          SELECT 1
-          FROM "rePosts"
-          WHERE "rePosts"."postId" = p.id AND "rePosts"."userId" = $1
-      ) THEN true ELSE false END AS reposted
+      ARRAY_AGG(
+        json_build_object(
+          'reposted', EXISTS (
+            SELECT 1
+            FROM "rePosts"
+            WHERE "rePosts"."postId" = p.id AND "rePosts"."userId" = r."userId"
+          ),
+          'repostCount', (SELECT COUNT(*) FROM "rePosts" WHERE "rePosts"."postId" = p.id),
+          'userId', r."userId",
+          'userName', ru.username
+        )
+      ) AS repost
       FROM posts p
       LEFT JOIN "rePosts" r ON p.id = r."postId"
       LEFT JOIN users u ON p."userId" = u.id
@@ -150,7 +157,6 @@ export async function getPostsRefactor(req, res) {
       `,
       [userId]
     );
-
     const posts = await Promise.all(
       postsQuery.rows.map(async (post) => {
         const urlData = await getUrlMetaData(post.link);
@@ -206,8 +212,9 @@ export async function searchUserRepository(user) {
 }
 
 export async function getTagByName(id, hashtag) {
-  const posts = db.query(
-    `SELECT
+  try {
+    const postsQuery = await db.query(
+      `SELECT
       "p"."id",
       "p"."link",
       "p"."description",
@@ -238,9 +245,22 @@ export async function getTagByName(id, hashtag) {
     ORDER BY
       "p"."createdAt" DESC;
     `,
-    [id, hashtag]
-  );
-  return posts;
+      [id, hashtag]
+    );
+    const posts = await Promise.all(
+      postsQuery.rows.map(async (post) => {
+        const urlData = await getUrlMetaData(post.link);
+
+        return {
+          ...post,
+          urlData: urlData,
+        };
+      })
+    );
+    return posts;
+  } catch (err) {
+    console.log(err.message);
+  }
 }
 
 export async function deletePostsRepository(postId) {
