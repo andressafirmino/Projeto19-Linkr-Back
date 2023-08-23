@@ -8,9 +8,10 @@ import {
 export async function getPostsFromUser(req, res) {
   const { id } = req.params;
   const { userId } = req.query;
+  const { page } = req.query;
 
   try {
-    const postsResult = await userPosts(id);
+    const postsResult = await userPosts(id, page);
 
     const userResult = await userInfo(id);
 

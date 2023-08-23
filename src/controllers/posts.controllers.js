@@ -148,9 +148,10 @@ export async function searchUser(req, res) {
 export async function getPostByTag(req, res) {
   const { hashtag } = req.params;
   const { id } = req.params;
+  const { page } = req.query;
 
   try {
-    const result = await getTagByName(id, hashtag);
+    const result = await getTagByName(id, hashtag, page);
     res.status(200).send(result);
   } catch (err) {
     res.status(500).send(err.message);

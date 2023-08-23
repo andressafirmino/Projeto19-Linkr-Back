@@ -115,8 +115,10 @@ export async function getPosts(req, res) {
 //! FUNÇÃO getPostsRefactor
 //? PEGA OS POSTS E OS RE_POSTS
 export async function getPostsRefactor(req, res) {
-  const { userId } = req.query;
+  const { userId, page } = req.query;
 
+  const postsPerPage = 10;
+  const offset = page * postsPerPage || 0;
   try {
     const postsQuery = await db.query(
       `
@@ -151,11 +153,14 @@ export async function getPostsRefactor(req, res) {
       LEFT JOIN likes l ON p.id = l."postId"
       LEFT JOIN post_hashtags ph ON p.id = ph."postId"
       LEFT JOIN hashtags h ON ph."tagId" = h.id
+      WHERE p."userId" = $1
       GROUP BY p.id, "ownerUserId", "ownerUsername", "ownerImage"
-      ORDER BY "createdAt" DESC;
+      ORDER BY "createdAt" DESC
+      LIMIT $2 OFFSET $3;
       `,
-      [userId]
+      [userId, postsPerPage, offset]
     );
+    
     const posts = await Promise.all(
       postsQuery.rows.map(async (post) => {
         const urlData = await getUrlMetaData(post.link);
@@ -172,6 +177,7 @@ export async function getPostsRefactor(req, res) {
     res.status(500).send(err.message);
   }
 }
+
 
 export async function likePost(req, res) {
   const { postId } = req.params;
@@ -210,7 +216,10 @@ export async function searchUserRepository(user) {
   return result;
 }
 
-export async function getTagByName(id, hashtag) {
+export async function getTagByName(id, hashtag, page) {
+  const postsPerPage = 10;
+  const offset = page * postsPerPage || 0;
+
   try {
     const postsQuery = await db.query(
       `SELECT
@@ -242,9 +251,11 @@ export async function getTagByName(id, hashtag) {
     GROUP BY
       "p"."id", "p"."link", "p"."description", "p"."userId", "p"."createdAt", "u"."username", "u"."image"
     ORDER BY
-      "p"."createdAt" DESC;
+      "p"."createdAt" DESC
+    LIMIT 10 
+    OFFSET $3;
     `,
-      [id, hashtag]
+      [id, hashtag, offset]
     );
     const posts = await Promise.all(
       postsQuery.rows.map(async (post) => {
@@ -273,9 +284,12 @@ export async function updatePostRepository(postId, description) {
   ]);
 }
 
-export async function userPosts(userId) {
-  const result = await db.query(`SELECT * FROM posts WHERE "userId" = $1;`, [
-    userId,
+export async function userPosts(userId, page) {
+  const postsPerPage = 10;
+  const offset = page * postsPerPage || 0;
+
+  const result = await db.query(`SELECT * FROM posts WHERE "userId" = $1 LIMIT 10 OFFSET $2;`, [
+    userId, offset
   ]);
   return result;
 }
