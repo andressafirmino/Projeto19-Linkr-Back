@@ -129,15 +129,22 @@ export async function getPostsRefactor(req, res) {
       COUNT(l.id) AS likes,
       ARRAY_AGG(h.name) AS hashtags,
       CASE WHEN EXISTS (
-          SELECT 1
-          FROM likes
-          WHERE likes."postId" = p.id AND likes."userId" = $1
+        SELECT 1
+        FROM likes
+        WHERE likes."postId" = p.id AND likes."userId" = $1
       ) THEN true ELSE false END AS liked,
-      CASE WHEN EXISTS (
-          SELECT 1
-          FROM "rePosts"
-          WHERE "rePosts"."postId" = p.id AND "rePosts"."userId" = $1
-      ) THEN true ELSE false END AS reposted
+      ARRAY_AGG(
+        json_build_object(
+          'reposted', EXISTS (
+            SELECT 1
+            FROM "rePosts"
+            WHERE "rePosts"."postId" = p.id AND "rePosts"."userId" = r."userId"
+          ),
+          'repostCount', (SELECT COUNT(*) FROM "rePosts" WHERE "rePosts"."postId" = p.id),
+          'userId', r."userId",
+          'userName', ru.username
+        )
+      ) AS repost
       FROM posts p
       LEFT JOIN "rePosts" r ON p.id = r."postId"
       LEFT JOIN users u ON p."userId" = u.id
@@ -150,7 +157,6 @@ export async function getPostsRefactor(req, res) {
       `,
       [userId]
     );
-
     const posts = await Promise.all(
       postsQuery.rows.map(async (post) => {
         const urlData = await getUrlMetaData(post.link);

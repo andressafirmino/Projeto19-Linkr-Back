@@ -34,7 +34,6 @@ export async function postHashtag(req, res) {
         text += word + " ";
       }
     });
-    console.log(text);
     const idPost = await publicPost(link, text, userId);
 
     const hashtagPromises = words.map(async (word) => {
@@ -152,7 +151,6 @@ export async function getPostByTag(req, res) {
 
   try {
     const result = await getTagByName(id, hashtag);
-    console.log(result);
     res.status(200).send(result);
   } catch (err) {
     res.status(500).send(err.message);
