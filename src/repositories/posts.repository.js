@@ -1,5 +1,4 @@
 import { db } from "../database/database.connection.js";
-import urlMetadata from "url-metadata";
 import axios from "axios";
 
 export async function publicPost(link, description, userId) {
@@ -263,7 +262,7 @@ export async function userPosts(userId) {
 
 export async function userInfo(id) {
   const result = await db.query(
-    `SELECT username, image FROM users WHERE id = $1;`,
+    `SELECT id, username, image FROM users WHERE id = $1;`,
     [id]
   );
   return result;
