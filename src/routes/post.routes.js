@@ -13,6 +13,7 @@ import {
   checkUserLikedPost,
   getPosts,
   getPostsRefactor,
+  getPostsTimeLine,
   likePost,
   unlikePost,
 } from "../repositories/posts.repository.js";
@@ -39,6 +40,7 @@ postsRouter.put(
   updatePost
 );
 postsRouter.get("/", getPosts);
+postsRouter.get("/timeline", getPostsTimeLine);
 postsRouter.get("/search", authenticateToken, searchUser);
 postsRouter.get("/hashtag/:hashtag/:id", getPostByTag);
 postsRouter.get("/trending", getTrendingHashtags);
