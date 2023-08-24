@@ -14,7 +14,6 @@ import {
   checkUserLikedPost,
   getPosts,
   getPostsRefactor,
-  getPostsTimeLine,
   likePost,
   unlikePost,
 } from "../repositories/posts.repository.js";
@@ -23,7 +22,7 @@ import { updateSchema } from "../schemas/update.schemas.js";
 
 const postsRouter = Router();
 
-postsRouter.get("/posts", getPostsRefactor);
+postsRouter.get("/posts", getPostsRefactor); //!retorna todos os posts
 postsRouter.get("/checkLike", checkUserLikedPost);
 postsRouter.post("/like/:postId", likePost);
 postsRouter.delete("/unlike/:postId", unlikePost);
@@ -41,9 +40,9 @@ postsRouter.put(
   updatePost
 );
 postsRouter.get("/", getPosts);
-postsRouter.get("/timeline", getPostsFromTimeline);
+postsRouter.get("/timeline", getPostsFromTimeline); //! retorna todos os posts que o usuário segue
 postsRouter.get("/search", authenticateToken, searchUser);
-postsRouter.get("/hashtag/:hashtag/:id", getPostByTag);
+postsRouter.get("/hashtag/:hashtag/:id", getPostByTag); //! retorna todos os posts pela hashtag em comum
 postsRouter.get("/trending", getTrendingHashtags);
 
 export default postsRouter;
