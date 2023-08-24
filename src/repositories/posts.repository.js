@@ -113,8 +113,6 @@ export async function getPosts(req, res) {
   }
 }
 
-//! FUNÇÃO getPostsRefactor
-//? PEGA OS POSTS E OS RE_POSTS
 export async function getPostsRefactor(req, res) {
   const { userId } = req.query;
 
@@ -234,37 +232,49 @@ export async function searchUserRepository(user, userId) {
 export async function getTagByName(id, hashtag) {
   try {
     const postsQuery = await db.query(
-      `SELECT
-      "p"."id",
-      "p"."link",
-      "p"."description",
-      "p"."userId",
-      "p"."createdAt",
-    COUNT("l"."id") AS "likes",
-      "u"."username" AS "ownerUsername",
-      "u"."image" AS "ownerImage",
-    ARRAY_AGG("h"."name") AS "hashtags",
-    CASE
+      `
+      SELECT
+        "p"."id",
+        "p"."link",
+        "p"."description",
+        "p"."userId",
+      COALESCE("p"."createdAt", NOW()) AS "createdAt",
+        "u"."id" AS "ownerUserId",
+        "u"."username" AS "ownerUsername",
+        "u"."image" AS "ownerImage",
+      COUNT("l"."id") AS "likes",
+      ARRAY_AGG("h"."name") AS "hashtags",
+      CASE
       WHEN EXISTS (SELECT 1 FROM "likes" WHERE "postId" = "p"."id" AND "userId" = $1) THEN TRUE
       ELSE FALSE
-    END AS "liked"
-    FROM
-      "posts" "p"
-    JOIN
-      "users" "u" ON "p"."userId" = "u"."id"
-    LEFT JOIN
-      "likes" "l" ON "p"."id" = "l"."postId"
-    JOIN
-      "post_hashtags" "ph" ON "p"."id" = "ph"."postId"
-    JOIN
-      "hashtags" "h" ON "ph"."tagId" = "h"."id"
-    WHERE
-      "h"."name" = $2
-    GROUP BY
-      "p"."id", "p"."link", "p"."description", "p"."userId", "p"."createdAt", "u"."username", "u"."image"
-    ORDER BY
-      "p"."createdAt" DESC;
-    `,
+      END AS "liked",
+        jsonb_build_array(
+          jsonb_build_object(
+            'reposted', false,
+            'repostCount', COUNT("r"."id"),
+            'userId', NULL,
+            'userName', NULL
+          )
+        ) AS "repost"
+      FROM
+        "posts" "p"
+      JOIN
+        "users" "u" ON "p"."userId" = "u"."id"
+      LEFT JOIN
+        "likes" "l" ON "p"."id" = "l"."postId"
+      LEFT JOIN
+        "rePosts" "r" ON "p"."id" = "r"."postId"
+      JOIN
+        "post_hashtags" "ph" ON "p"."id" = "ph"."postId"
+      JOIN
+        "hashtags" "h" ON "ph"."tagId" = "h"."id"
+      WHERE
+        "h"."name" = $2
+      GROUP BY
+        "p"."id", "p"."link", "p"."description", "p"."userId", "p"."createdAt", "u"."id", "u"."username", "u"."image", "liked"
+      ORDER BY
+        "createdAt" DESC;
+      `,
       [id, hashtag]
     );
     const posts = await Promise.all(
@@ -307,4 +317,147 @@ export async function userInfo(id) {
     [id]
   );
   return result;
+}
+export async function getPostsTimeLine(req, res) {
+  const { userId } = req.query;
+
+  try {
+    const postsQuery = await db.query(
+      `
+      WITH PostDetails AS (
+        SELECT
+          p."id" AS "id",
+          p."link" AS "link",
+          p."description" AS "description",
+          p."userId" AS "userId",
+        COALESCE(p."createdAt", NOW()) AS "createdAt",
+          u."id" AS "ownerUserId",
+          u."username" AS "ownerUsername",
+          u."image" AS "ownerImage",
+        (SELECT COUNT(*) FROM "likes" l WHERE l."postId" = p."id") AS "likes",
+          EXISTS (
+          SELECT 1
+          FROM "likes" l
+          WHERE l."userId" = $1 
+          AND l."postId" = p."id"
+        ) AS "liked"
+        FROM "posts" p
+        JOIN "users" u ON p."userId" = u."id"
+        WHERE p."userId" IN (SELECT "userId" FROM "follows" WHERE "followerId" = $1)
+        GROUP BY p."id", u."id"
+      ),
+      RepostDetails AS (
+        SELECT
+          p."id" AS "id",
+          p."link" AS "link",
+          p."description" AS "description",
+          p."userId" AS "userId",
+        COALESCE(r."createdAt", NOW()) AS "createdAt",
+          u."id" AS "ownerUserId",
+          u."username" AS "ownerUsername",
+          u."image" AS "ownerImage",
+        (SELECT COUNT(*) FROM "likes" l WHERE l."postId" = p."id") AS "likes",
+          EXISTS (
+          SELECT 1
+          FROM "likes" l
+          WHERE l."userId" = $1
+          AND l."postId" = p."id"
+        ) AS "liked",
+        TRUE AS "reposted",
+        (SELECT COUNT(*) FROM "rePosts" rp WHERE rp."postId" = p."id") AS "repostCount",
+        r."userId" AS "repostUserId",
+        ru."username" AS "repostUsername"
+        FROM "rePosts" r
+        JOIN "posts" p ON r."postId" = p."id"
+        JOIN "users" u ON p."userId" = u."id"
+        JOIN "users" ru ON r."userId" = ru."id"
+        WHERE r."userId" IN (SELECT "userId" FROM "follows" WHERE "followerId" = $1)
+        GROUP BY p."id", r."createdAt", u."id", r."userId", ru."username"
+      )
+      SELECT
+        "id",
+        "link",
+        "description",
+        "userId",
+        "createdAt",
+        "ownerUserId",
+        "ownerUsername",
+        "ownerImage",
+        "likes"::text,
+      (
+        SELECT ARRAY_AGG(h."name")
+        FROM "post_hashtags" ph
+        INNER JOIN "hashtags" h ON ph."tagId" = h."id"
+        WHERE ph."postId" = rd."id"
+      ) AS "hashtags",
+        "liked",
+      CASE
+      WHEN "reposted" THEN
+        jsonb_build_array(
+          jsonb_build_object(
+            'reposted', true,
+            'repostCount', "repostCount",
+            'userId', "repostUserId",
+            'userName', "repostUsername"
+          )
+        )
+      ELSE
+        jsonb_build_array(
+          jsonb_build_object(
+            'userId', NULL,
+            'reposted', false,
+            'userName', NULL,
+            'repostCount', 0
+          )
+        )
+      END AS "repost"
+      FROM RepostDetails rd
+
+      UNION ALL
+
+      SELECT
+        "id",
+        "link",
+        "description",
+        "userId",
+        "createdAt",
+        "ownerUserId",
+        "ownerUsername",
+        "ownerImage",
+        "likes"::text,
+      (
+        SELECT ARRAY_AGG(h."name")
+        FROM "post_hashtags" ph
+        INNER JOIN "hashtags" h ON ph."tagId" = h."id"
+        WHERE ph."postId" = pd."id"
+      ) AS "hashtags",
+        "liked",
+          jsonb_build_array(
+            jsonb_build_object(
+              'userId', NULL,
+              'reposted', false,
+              'userName', NULL,
+              'repostCount', 0
+            )
+          ) AS "repost"
+      FROM PostDetails pd
+      ORDER BY "createdAt" DESC;
+      `,
+      [userId]
+    );
+    const posts = await Promise.all(
+      postsQuery.rows.map(async (post) => {
+        const urlData = await getUrlMetaData(post.link);
+
+        return {
+          ...post,
+          urlData: urlData,
+        };
+      })
+    );
+
+    res.status(200).json(posts);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 }
