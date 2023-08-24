@@ -2,6 +2,7 @@ import { userPosts, userInfo } from "../repositories/posts.repository.js";
 import {
   checkFollowUser,
   followUser,
+  getFollowing,
   unfollowUser,
 } from "../repositories/user.repository.js";
 
@@ -59,5 +60,19 @@ export async function unfollow(req, res) {
     return res
       .status(500)
       .json({ message: "Ocorreu um erro ao deixar de seguir o usuário." });
+  }
+}
+
+export async function usersFollowing(req, res) {
+  const { id } = req.params;
+
+  try {
+    const following = await getFollowing(id);
+    res.status(200).json({ following });
+  } catch (error) {
+    console.error("Erro ao obter os usuários que o usuário segue:", error);
+    res
+      .status(500)
+      .json({ message: "Erro ao obter os usuários que o usuário segue." });
   }
 }

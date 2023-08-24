@@ -62,3 +62,26 @@ export async function checkFollowUser(userId, followerId) {
     return false;
   }
 }
+
+export async function getFollowing(userId) {
+  try {
+    const followingQuery = await db.query(
+      `SELECT * FROM follows WHERE "followerId" = $1`,
+      [userId]
+    );
+
+    const followingIds = followingQuery.rows.map((follow) => follow.userId);
+
+    const followingUsersQuery = await db.query(
+      `SELECT id, username FROM users WHERE id = ANY($1)`,
+      [followingIds]
+    );
+
+    const followingUsers = followingUsersQuery.rows;
+
+    return followingUsers;
+  } catch (error) {
+    console.error("Erro ao obter os usuários que o usuário segue:", error);
+    return [];
+  }
+}
