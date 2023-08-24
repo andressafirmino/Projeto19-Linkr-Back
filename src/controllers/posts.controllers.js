@@ -150,10 +150,20 @@ export async function searchUser(req, res) {
 export async function getPostByTag(req, res) {
   const { hashtag } = req.params;
   const { id } = req.params;
+  const { page } = req.query;
+
+  const viewingPage =  page ? Number(page) : 1;
 
   try {
     const result = await getTagByName(id, hashtag);
-    res.status(200).send(result);
+
+    const response = result.slice((viewingPage - 1) * 10, viewingPage * 10);
+
+    if(response.length === 0){
+      return res.status(204).send("No more posts to show");
+    }
+
+    res.status(200).send(response);
   } catch (err) {
     res.status(500).send(err.message);
   }
