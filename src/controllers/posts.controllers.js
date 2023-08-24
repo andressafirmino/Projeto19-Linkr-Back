@@ -5,29 +5,41 @@ import {
   getTagByName,
   searchUserRepository,
   deletePostsRepository,
-  updatePostRepository
+  updatePostRepository,
 } from "../repositories/posts.repository.js";
 
-import { getHashtags, deleteHashtags, getPostHashtagsNames, getHashtagIdByName  } from "../repositories/hashtags.repository.js";
-import { getPostHashtags,   deleteInPostHashtags, getCountPostHashtags, getAllPostHashtags, deleteInPostHashtagById, getMostUsedHashtags
+import {
+  getHashtags,
+  deleteHashtags,
+  getPostHashtagsNames,
+  getHashtagIdByName,
+} from "../repositories/hashtags.repository.js";
+import {
+  getPostHashtags,
+  deleteInPostHashtags,
+  getCountPostHashtags,
+  getAllPostHashtags,
+  deleteInPostHashtagById,
+  getMostUsedHashtags,
 } from "../repositories/post_hashtags.repository.js";
 
 export async function postHashtag(req, res) {
   const { link, description, userId } = req.body;
 
   try {
-    let text = '';
+    let text = "";
     const words = description.split(/\s+/);
     words.map(async (word) => {
-      if(!word.startsWith("#")) {
-        text += word + ' ';
+      if (!word.startsWith("#")) {
+        text += word + " ";
       }
-    })
-    const idPost = await publicPost(link, text, userId);    
+    });
+    const idPost = await publicPost(link, text, userId);
+    
     const hashtagPromises = words.map(async (word) => {
       if (word.startsWith("#")) {
         try {
-          const noHashtag = word.replace(/^#/, "");
+        const noHashtag = word.replace(/^#/, "");
           let hashtagId = await getHashtagIdByName(noHashtag);
 
           if (hashtagId === null) {
@@ -48,20 +60,21 @@ export async function postHashtag(req, res) {
   }
 }
 
-export async function deletePost(req, res){
+export async function deletePost(req, res) {
   const { id: postId } = req.params;
   try {
     const hashtagsToDelete = await getAllPostHashtags(postId);
     await deleteInPostHashtagById(postId);
     for (const hashtag of hashtagsToDelete.rows) {
       const hashtagId = hashtag.tagId;
-      const countPostHashtags = (await getCountPostHashtags(hashtagId, postId)).rows[0].count
+      const countPostHashtags = (await getCountPostHashtags(hashtagId, postId))
+        .rows[0].count;
       if (countPostHashtags === "0") {
         deleteHashtags(hashtagId);
       }
     }
 
-    await  deletePostsRepository(postId);
+    await deletePostsRepository(postId);
     res.sendStatus(204);
   } catch (err) {
     res.status(500).send(err.message);
@@ -75,36 +88,42 @@ export async function updatePost(req, res) {
     const currentHashtagsId = await getPostHashtags(postId);
     const words = description.split(/\s+/);
     const newHashtags = [];
-    
+
     words.forEach((word) => {
       if (word.startsWith("#")) {
         const noHashtag = word.replace(/^#/, "");
         newHashtags.push(noHashtag);
       }
     });
-    const currentHashtagsName = await getPostHashtagsNames(currentHashtagsId)
+    const currentHashtagsName = await getPostHashtagsNames(currentHashtagsId);
 
-    const itensInNewHashtags = newHashtags.filter(item => !currentHashtagsName.includes(item));
-    const itensInCurrentHashtagsName = currentHashtagsName.filter(item => !newHashtags.includes(item));
+    const itensInNewHashtags = newHashtags.filter(
+      (item) => !currentHashtagsName.includes(item)
+    );
+    const itensInCurrentHashtagsName = currentHashtagsName.filter(
+      (item) => !newHashtags.includes(item)
+    );
 
     for (const hashtag of itensInNewHashtags) {
       const result = await publicHasthtag(hashtag);
       const hashtagId = result.rows[0].id;
       await postTags(postId, hashtagId);
-    }   
+    }
 
     for (const hashtagName of itensInCurrentHashtagsName) {
-
-      const hashtagIdQuery = await getHashtags(hashtagName); 
+      const hashtagIdQuery = await getHashtags(hashtagName);
       const hashtagId = hashtagIdQuery.rows[0].id;
-      const postHashtagsCountQuery = await getCountPostHashtags(hashtagId, postId)
+      const postHashtagsCountQuery = await getCountPostHashtags(
+        hashtagId,
+        postId
+      );
       const postHashtagsCount = postHashtagsCountQuery.rows[0].count;
-    
+
       if (postHashtagsCount === "0") {
-        await deleteInPostHashtags(hashtagId, postId)
-        await deleteHashtags(hashtagId)
+        await deleteInPostHashtags(hashtagId, postId);
+        await deleteHashtags(hashtagId);
       } else {
-        await deleteInPostHashtags(hashtagId, postId)
+        await deleteInPostHashtags(hashtagId, postId);
       }
     }
 
@@ -117,10 +136,11 @@ export async function updatePost(req, res) {
 
 export async function searchUser(req, res) {
   const { user } = req.query;
+  const userId = req.userId;
 
   try {
-    const users = await searchUserRepository(user);
-    res.send(users.rows);
+    const usersWithFollowing = await searchUserRepository(user, userId);
+    res.send(usersWithFollowing);
   } catch (err) {
     res.status(500).send(err.message);
   }
@@ -132,8 +152,7 @@ export async function getPostByTag(req, res) {
 
   try {
     const result = await getTagByName(id, hashtag);
-
-    res.status(200).send(result.rows);
+    res.status(200).send(result);
   } catch (err) {
     res.status(500).send(err.message);
   }
