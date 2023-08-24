@@ -130,7 +130,7 @@ export async function unlikePost(req, res) {
 
 export async function searchUserRepository(user) {
   const result = await db.query(`SELECT * FROM users WHERE username LIKE $1;`, [
-    user + "%",
+    user + "%"
   ]);
   return result;
 }
