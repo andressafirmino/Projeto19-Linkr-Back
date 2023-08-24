@@ -136,10 +136,11 @@ export async function updatePost(req, res) {
 
 export async function searchUser(req, res) {
   const { user } = req.query;
+  const userId = req.userId;
 
   try {
-    const users = await searchUserRepository(user);
-    res.send(users.rows);
+    const usersWithFollowing = await searchUserRepository(user, userId);
+    res.send(usersWithFollowing);
   } catch (err) {
     res.status(500).send(err.message);
   }

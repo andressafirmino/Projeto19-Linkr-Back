@@ -39,7 +39,7 @@ postsRouter.put(
   updatePost
 );
 postsRouter.get("/", getPosts);
-postsRouter.get("/search", searchUser);
+postsRouter.get("/search", authenticateToken, searchUser);
 postsRouter.get("/hashtag/:hashtag/:id", getPostByTag);
 postsRouter.get("/trending", getTrendingHashtags);
 

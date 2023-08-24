@@ -1,5 +1,6 @@
 import { db } from "../database/database.connection.js";
 import axios from "axios";
+import { checkFollowUser } from "./user.repository.js";
 
 export async function publicPost(link, description, userId) {
   const result = db.query(
@@ -203,11 +204,31 @@ export async function unlikePost(req, res) {
   }
 }
 
-export async function searchUserRepository(user) {
-  const result = await db.query(`SELECT * FROM users WHERE username LIKE $1;`, [
-    user + "%",
-  ]);
-  return result;
+export async function searchUserRepository(user, userId) {
+  try {
+    const result = await db.query(
+      `SELECT * FROM users WHERE username LIKE $1;`,
+      [user + "%"]
+    );
+
+    const usersWithFollowing = await Promise.all(
+      result.rows.map(async (searchedUser) => {
+        const isFollowing = await checkFollowUser(searchedUser.id, userId);
+        return { ...searchedUser, following: isFollowing };
+      })
+    );
+
+    usersWithFollowing.sort((a, b) => {
+      if (b.following && !a.following) return 1;
+      if (!b.following && a.following) return -1;
+      return a.username.localeCompare(b.username);
+    });
+
+    return usersWithFollowing;
+  } catch (error) {
+    console.error("Erro ao buscar usuários:", error);
+    return [];
+  }
 }
 
 export async function getTagByName(id, hashtag) {
