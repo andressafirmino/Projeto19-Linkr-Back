@@ -318,9 +318,7 @@ export async function userInfo(id) {
   );
   return result;
 }
-export async function getPostsTimeLine(req, res) {
-  const { userId } = req.query;
-
+export async function getPostsTimeLine(userId) {
   try {
     const postsQuery = await db.query(
       `
@@ -445,6 +443,7 @@ export async function getPostsTimeLine(req, res) {
       `,
       [userId]
     );
+
     const posts = await Promise.all(
       postsQuery.rows.map(async (post) => {
         const urlData = await getUrlMetaData(post.link);
@@ -455,9 +454,9 @@ export async function getPostsTimeLine(req, res) {
         };
       })
     );
-
-    res.status(200).json(posts);
+    
+    return posts;
   } catch (err) {
-    res.status(500).send(err.message);
+    console.log(err.message);
   }
 }

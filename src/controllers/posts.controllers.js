@@ -6,6 +6,7 @@ import {
   searchUserRepository,
   deletePostsRepository,
   updatePostRepository,
+  getPostsTimeLine,
 } from "../repositories/posts.repository.js";
 
 import {
@@ -169,6 +170,26 @@ export async function getTrendingHashtags(req, res) {
 
     res.status(200).json(formattedResponse);
   } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
+
+export async function getPostsFromTimeline(req, res) {
+  const { userId, page } = req.query;
+
+  const viewingPage =  page ? Number(page) : 1;
+
+  try {
+    const timelinePosts = await getPostsTimeLine(userId);
+
+    const response = timelinePosts.slice((viewingPage - 1) * 10, viewingPage * 10);
+
+    if(response.length === 0){
+      return res.status(204).send("No more posts to show");
+    }
+
+    res.status(200).send(response);
+  } catch(err) {
     res.status(500).send(err.message);
   }
 }

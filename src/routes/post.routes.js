@@ -6,6 +6,7 @@ import {
   deletePost,
   updatePost,
   getTrendingHashtags,
+  getPostsFromTimeline,
 } from "../controllers/posts.controllers.js";
 import validateSchema from "../middlewares/validationSchemas.middleswares.js";
 import { postsSchema } from "../schemas/posts.schemas.js";
@@ -40,7 +41,7 @@ postsRouter.put(
   updatePost
 );
 postsRouter.get("/", getPosts);
-postsRouter.get("/timeline", getPostsTimeLine);
+postsRouter.get("/timeline", getPostsFromTimeline);
 postsRouter.get("/search", authenticateToken, searchUser);
 postsRouter.get("/hashtag/:hashtag/:id", getPostByTag);
 postsRouter.get("/trending", getTrendingHashtags);
