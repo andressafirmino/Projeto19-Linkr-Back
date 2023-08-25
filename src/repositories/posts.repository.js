@@ -264,6 +264,7 @@ export async function searchUserRepository(user, userId) {
 }
 
 export async function getTagByName(id, hashtag) {
+
   try {
     const postsQuery = await db.query(
       `
@@ -314,12 +315,12 @@ export async function getTagByName(id, hashtag) {
     const posts = await Promise.all(
       postsQuery.rows.map(async (post) => {
         const urlData = await getUrlMetaData(post.link);
-        //const comments = await getComments(post, post.id);
+        const comments = await getComments(id, post.id);
 
         return {
           ...post,
           urlData: urlData,
-          //comments: comments.rows
+          comments: comments.rows
         };
       })
     );
