@@ -36,11 +36,11 @@ export async function postHashtag(req, res) {
       }
     });
     const idPost = await publicPost(link, text, userId);
-
+    
     const hashtagPromises = words.map(async (word) => {
       if (word.startsWith("#")) {
         try {
-          const noHashtag = word.replace(/^#/, "");
+        const noHashtag = word.replace(/^#/, "");
           let hashtagId = await getHashtagIdByName(noHashtag);
 
           if (hashtagId === null) {

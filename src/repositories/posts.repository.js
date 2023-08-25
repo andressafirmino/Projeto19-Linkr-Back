@@ -67,6 +67,35 @@ async function getUrlMetaData(url) {
   }
 }
 
+async function getComments(userId, postId) {
+  try {
+    const result = await db.query(      
+        `SELECT
+        c."comment",
+        u."image" AS "image",
+        u."username" AS "username",
+        CASE
+          WHEN c."userId" = p."userId" THEN 'post''s author'
+          WHEN f."followerId" = $1 THEN 'following'
+          ELSE NULL
+        END AS "relationship"
+    FROM
+        "comments" c
+    JOIN
+        "users" u ON c."userId" = u."id"
+        JOIN
+    "posts" p ON c."postId" = p."id"
+    LEFT JOIN
+        "follows" f ON u."id" = f."userId" AND f."followerId" = $1
+    WHERE
+        c."postId" = $2;    
+        `, [userId, postId]
+      );    
+    return result;
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
 export async function getPosts(req, res) {
   const { userId } = req.query;
 
@@ -74,7 +103,7 @@ export async function getPosts(req, res) {
     const postsQuery = await db.query(
       `SELECT * FROM posts ORDER BY "createdAt" DESC`
     );
-
+     
     const posts = await Promise.all(
       postsQuery.rows.map(async (post) => {
         const likesQuery = await db.query(
@@ -95,6 +124,8 @@ export async function getPosts(req, res) {
 
         const urlData = await getUrlMetaData(post.link);
 
+        const comments = await getComments(userId, post.id);
+
         return {
           ...post,
           likes: likesCount,
@@ -103,6 +134,7 @@ export async function getPosts(req, res) {
           hashtags: hashtags,
           liked: liked,
           urlData: urlData,
+          comments: comments.rows
         };
       })
     );
@@ -158,10 +190,12 @@ export async function getPostsRefactor(req, res) {
     const posts = await Promise.all(
       postsQuery.rows.map(async (post) => {
         const urlData = await getUrlMetaData(post.link);
-
+        const comments = await getComments(userId, post.id);
+        
         return {
           ...post,
           urlData: urlData,
+          comments: comments.rows
         };
       })
     );
@@ -230,6 +264,7 @@ export async function searchUserRepository(user, userId) {
 }
 
 export async function getTagByName(id, hashtag) {
+
   try {
     const postsQuery = await db.query(
       `
@@ -280,10 +315,12 @@ export async function getTagByName(id, hashtag) {
     const posts = await Promise.all(
       postsQuery.rows.map(async (post) => {
         const urlData = await getUrlMetaData(post.link);
+        const comments = await getComments(id, post.id);
 
         return {
           ...post,
           urlData: urlData,
+          comments: comments.rows
         };
       })
     );
@@ -447,10 +484,12 @@ export async function getPostsTimeLine(userId) {
     const posts = await Promise.all(
       postsQuery.rows.map(async (post) => {
         const urlData = await getUrlMetaData(post.link);
+        const comments = await getComments(userId, post.id);
 
         return {
           ...post,
           urlData: urlData,
+          comments: comments.rows
         };
       })
     );
