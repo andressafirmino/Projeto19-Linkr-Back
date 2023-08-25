@@ -5,14 +5,23 @@ import {
   getFollowing,
   unfollowUser,
 } from "../repositories/user.repository.js";
+import { getPostsRefactor } from "../repositories/posts.repository.js";
 
 export async function getPostsFromUser(req, res) {
   const { id } = req.params;
-  const { userId } = req.query;
+  const { userId, page } = req.query;
+
+  const viewingPage =  page ? Number(page) : 1;
 
   try {
-    const postsResult = await userPosts(id);
+    const postsFromUser = await getPostsRefactor(userId);
 
+    const response = postsFromUser.slice((viewingPage - 1) * 10, viewingPage * 10);
+
+    if(response.length === 0){
+      return res.status(204).send("No more posts to show");
+    }
+      
     const userResult = await userInfo(id);
 
     if (userResult.rowCount === 0) {
@@ -25,12 +34,12 @@ export async function getPostsFromUser(req, res) {
       id: userResult.rows[0].id,
       username: userResult.rows[0].username,
       image: userResult.rows[0].image,
-      posts: postsResult.rows,
+      posts: postsFromUser.rows,
       isFollowing: isFollowing,
     };
 
-    res.status(200).json(userData);
-  } catch (err) {
+    res.status(200).send({userData, response});
+  } catch(err){
     res.status(500).send(err.message);
   }
 }

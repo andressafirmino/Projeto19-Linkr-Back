@@ -113,9 +113,7 @@ export async function getPosts(req, res) {
   }
 }
 
-export async function getPostsRefactor(req, res) {
-  const { userId } = req.query;
-
+export async function getPostsRefactor(userId) {
   try {
     const postsQuery = await db.query(
       `
@@ -166,7 +164,7 @@ export async function getPostsRefactor(req, res) {
       })
     );
 
-    res.status(200).json(posts);
+    return posts;
   } catch (err) {
     res.status(500).send(err.message);
   }
